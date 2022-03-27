@@ -1,0 +1,69 @@
+#!/usr/bin/python
+import os
+import sqlite3
+import datetime
+import time
+
+def generate_table(conn):
+  
+  conn.execute('''CREATE TABLE COMPANY
+  (Datum TEXT PRIMARY KEY NOT NULL,
+  NAME TEXT NOT NULL,
+  VALUE REAL NOT NULL);''')
+
+print("Table created successfully")
+
+def insert(conn):
+  
+  os.system("stty -F /dev/ttyUSB0 9600 raw")
+  messwert = os.popen("od --endian=big -x -N10 < /dev/ttyUSB0")
+  dateien = [zeile.strip() for zeile in messwert]
+  
+  dieEinzelWerte = dateien[0]
+  dew2 = dieEinzelWerte = dateien[0]
+  
+  dew2 = dieEinzelWerte.split(' ')
+  
+  PM25 = dew2[2]
+  PM10 = dew2[3]
+  
+  PM25L = PM25[0:2]
+  PM25H = PM25[2:]
+  
+  PM10L = PM10[0:2]
+  PM10H = PM10[2:]
+  
+  PM25H = int(PM25H, 16)
+  PM25L = int(PM25L, 16)
+  PM10H = int(PM10H, 16)
+  PM10L = int(PM10L, 16)
+  
+  PM25 = ((PM25H * 256) + PM25L) / 10
+  PM10 = ((PM10H * 256) + PM10L) /10
+  
+  now = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+  befehl1 = "INSERT INTO COMPANY (DATUM, Name, VALUE) VALUES ('" + now + "', 'PM25'," + "'" + str(PM25) + "');"
+  time.sleep(1)
+  
+  now = datetime.datetime.now(.strftime("%m/%d/%Y, %H:%M:%S"))
+  befehl2 = "INSERT INTO COMPANY (DATUM, Name, VALUE) VALUES ('" + now + "', 'PM10'," + "'" + str(PM10) + "');"
+  
+  conn.execute(befehl1)
+  conn.execute(befehl2)
+  
+  conn.commit()
+  
+  print("Der PM25-Wert beträgt: ", PM25,
+  "\n\nDer PM10-Wert beträgt: ", PM10)
+  
+  def main():
+    
+    conn = sqlite3.connect('test.db')
+    print("Opened database successfully")
+    
+    while(True):
+      insert(conn)
+    conn.close()
+    
+ if __name__ == '__main__':
+    main()
